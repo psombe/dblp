@@ -60,6 +60,9 @@ class BuildPaperRepdocVectors(YearFilterableTask):
     def run(self):
         repdocs = util.iter_csv_fwrapper(self.input())
         docs = ((docid, doc.decode('utf-8')) for docid, doc in repdocs)
+	for i in range(100):
+            docid, doc = docs.next();
+            print((docid,doc.encode('ascii','ignore')));   
         vecs = ((docid, doctovec.vectorize(doc)) for docid, doc in docs)
         rows = ((docid, '|'.join(doc).encode('utf-8')) for docid, doc in vecs)
         util.write_csv_to_fwrapper(self.output(), ('paper_id', 'doc'), rows)
@@ -148,7 +151,7 @@ class BuildAuthorRepdocVectors(YearFilterableTask):
 
     def run(self):
         paper_repdocs_file, author_file = self.input()
-
+        
         with paper_repdocs_file.open() as pfile:
             paper_df = pd.read_csv(pfile, index_col=(0,))
             paper_df.fillna('', inplace=True)
@@ -163,8 +166,10 @@ class BuildAuthorRepdocVectors(YearFilterableTask):
 
         # build up repdocs for each author
         for person_id, paper_id in author_df.itertuples():
-            doc = paper_df.loc[paper_id]['doc']
-            repdocs[person_id].append(doc)
+            # Check if doc exists
+            if paper_id in paper_df.doc.index:
+              doc = paper_df.loc[paper_id]['doc']
+              repdocs[person_id].append(doc)
 
         # save repdocs
         rows = ((person_id, '|'.join(docs))

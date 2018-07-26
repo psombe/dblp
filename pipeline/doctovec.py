@@ -29,9 +29,11 @@ Here are some other things you may want to do:
 
 """
 import sys
+import os
 import string
 import itertools as it
 import operator as op
+import re
 
 import nltk.corpus
 from nltk.tokenize import RegexpTokenizer
@@ -52,7 +54,9 @@ except ImportError:
     # Fall back to the slower stemmer available from NLTK
     try:
         from nltk import PorterStemmer
-        stem_word = PorterStemmer().stem_word
+        #stem_word = PorterStemmer().stem_word
+        # Using NLTK stem for stemmer
+        stem_word = PorterStemmer().stem
     except ImportError:
         # You're out of luck; in practice, we should never get here because the
         # import from nltk.tokenize above should throw an ImportError first.
@@ -73,7 +77,7 @@ TRANSLATION_TABLE = {ord(c): None for c in PUNCTUATION}
 # STOPWORDS = set(nltk.corpus.stopwords.words('english'))
 # but I had to expand on it to include contractions
 # this list includes all nltk stopwords plus contractions plus a few extras
-STOPWORDS_FILE = os.path.join(__curdir, 'stopwords.txt')
+STOPWORDS_FILE = os.path.join(os.path.curdir, 'stopwords.txt')
 try:
     with open(STOPWORDS_FILE) as f:
         STOPWORDS = set(f.read().split())
@@ -96,7 +100,9 @@ so cases where hyphens are left out are marked the same, such as:
 so contractions can be handled appropriately. These can be filtered out
 afterwards if desired.
 """
-TOKENIZER = RegexpTokenizer("\w+[-']?\w*(-?\w*)*")
+#TOKENIZER = RegexpTokenizer("\w+[-']?\w*(-?\w*)*") 
+#convert to non-capturing group
+TOKENIZER = RegexpTokenizer("\w+[-']?\w*(?:-?\w*)*")
 word_tokenize = TOKENIZER.tokenize
 
 # someone may find these things useful
