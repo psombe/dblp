@@ -60,9 +60,6 @@ class BuildPaperRepdocVectors(YearFilterableTask):
     def run(self):
         repdocs = util.iter_csv_fwrapper(self.input())
         docs = ((docid, doc.decode('utf-8')) for docid, doc in repdocs)
-	for i in range(100):
-            docid, doc = docs.next();
-            print((docid,doc.encode('ascii','ignore')));   
         vecs = ((docid, doctovec.vectorize(doc)) for docid, doc in docs)
         rows = ((docid, '|'.join(doc).encode('utf-8')) for docid, doc in vecs)
         util.write_csv_to_fwrapper(self.output(), ('paper_id', 'doc'), rows)
@@ -111,6 +108,24 @@ class BuildPaperRepdocCorpus(YearFilterableTask):
         repdoc_corpus = (doc.decode('utf-8').split('|') for _, doc in records)
         bow_corpus = (dictionary.doc2bow(doc) for doc in repdoc_corpus)
         gensim.corpora.MmCorpus.serialize(self.output().path, bow_corpus)
+
+
+class BuildPaperRepdocCorpusTfidf(YearFilterableTask):
+    """Build BoW representation and save it in MM format."""
+
+    def requires(self):
+        return BuildPaperRepdocCorpus(self.start, self.end)
+
+    @property
+    def base_paths(self):
+        return 'repdoc-by-paper-corpus-tfidf.mm'
+
+    def run(self):
+        bow_corpus_file = self.input()
+        bow_corpus = gensim.corpora.MmCorpus(bow_corpus_file.path)
+        tfidf = gensim.models.TfidfModel(bow_corpus)
+        tfidf_corpus = tfidf[bow_corpus]
+        gensim.corpora.MmCorpus.serialize(self.output().path, tfidf_corpus)
 
 
 class WritePaperToRepdocIdMap(YearFilterableTask):
